@@ -22,11 +22,11 @@ typedef int ElemType;
 typedef int KeyType;
 
 /*各结构体定义*/
-typedef struct Data //节点数据域
+typedef struct//节点数据域
 {
 	KeyType key;
 	ElemType value;
-};
+}Data;
 
 typedef struct BiTreeNode //节点
 {
@@ -34,12 +34,12 @@ typedef struct BiTreeNode //节点
 	BiTreeNode* lchild, * rchild;
 }*BiTree;
 
-typedef struct TreeList //二叉树线性表
+typedef struct//二叉树线性表
 {
 	BiTree* trees;
 	int length;
 	int listsize;
-};
+}TreeList;
 /*结构体定义结束*/
 
 TreeList treeL;
@@ -532,9 +532,26 @@ status InOrderTraverse(BiTree T, status(* Visit)(BiTreeNode c))
 {
     if(!T)
         return ERROR;
-    InOrderTraverse(T->lchild, Visit);
-    Visit(*T);
-    InOrderTraverse(T->rchild, Visit);
+    BiTree* s;
+    int size = pow(2, BiTreeDepth(T));
+    s = (BiTree*)malloc(sizeof(BiTree) * size);
+    BiTree n = T;
+    int top = 0;
+    int bottom = 0;
+    while(n || top != bottom)
+    {
+        if(n)
+        {
+            s[bottom++] = n;
+            n = n->lchild;
+        }    
+        else
+        {
+            n = s[bottom--];
+            Visit(*n);
+            n = n->rchild;
+        }
+    }
 	return OK;
 }
 status PostOrderTraverse(BiTree T, status(* Visit)(BiTreeNode c))
@@ -551,20 +568,34 @@ status LevelOrderTraverse(BiTree T, status(* Visit)(BiTreeNode c))
     if(!T)
         return ERROR;
     int size = pow(2, BiTreeDepth(T));
-    BiTreeNode* q;
-    q = (BiTreeNode*)malloc(sizeof(BiTreeNode) * q);
-    B
+    BiTree* q;
+    q = (BiTree*)malloc(sizeof(BiTree) * size);
+    BiTree n = T;
+    int top = 0;
+    int bottom = 0;
+    q[bottom++] = n;
+    do
+    {
+        if(n->lchild)
+            q[bottom++] = n->lchild;
+        if(n->rchild)
+            q[bottom++] = n->rchild;
+        Visit(*n);
+        q[top++] = NULL;
+    }while(q[top]);
 	return OK;
 }
 status Visit(BiTreeNode c)
 {
+    printf("%d %d ",c.data.key, c.data.value);
+    printf("\n");
 	return OK;
 }
 BiTreeNode* FindParent(BiTree T,KeyType e, int& LR)
 {
 	BiTreeNode* res = NULL;
 	if (!T)
-		return NULL;
+	    return NULL;
 	if (T->lchild)
 	{
 		if (T->lchild->data.key == e)
