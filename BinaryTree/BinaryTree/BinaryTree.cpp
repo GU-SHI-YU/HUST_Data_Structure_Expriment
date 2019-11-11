@@ -5,6 +5,7 @@
 #include <malloc.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #define TRUE 1
 #define FALSE 0
@@ -520,18 +521,39 @@ status DeleteNode(BiTree& T, KeyType e)
 }
 status PreOrderTraverse(BiTree T, status(* Visit)(BiTreeNode c))
 {
+    if(!T)
+        return ERROR;
+    Visit(*T);
+    PreOrderTraverse(T->lchild, Visit);
+    PreOrderTraverse(T->rchild, Visit);
 	return OK;
 }
 status InOrderTraverse(BiTree T, status(* Visit)(BiTreeNode c))
 {
+    if(!T)
+        return ERROR;
+    InOrderTraverse(T->lchild, Visit);
+    Visit(*T);
+    InOrderTraverse(T->rchild, Visit);
 	return OK;
 }
 status PostOrderTraverse(BiTree T, status(* Visit)(BiTreeNode c))
 {
+    if(!T)
+        return ERROR;
+    PostOrderTraverse(T->lchild, Visit); 
+    PostOrderTraverse(T->rchild, Visit);
+    Visit(*T);
 	return OK;
 }
 status LevelOrderTraverse(BiTree T, status(* Visit)(BiTreeNode c))
 {
+    if(!T)
+        return ERROR;
+    int size = pow(2, BiTreeDepth(T));
+    BiTreeNode* q;
+    q = (BiTreeNode*)malloc(sizeof(BiTreeNode) * q);
+    B
 	return OK;
 }
 status Visit(BiTreeNode c)
