@@ -44,6 +44,7 @@ typedef struct//二叉树线性表
 
 TreeList treeL;
 int flag;
+Data* p;
 
 /*函数声明*/
 status CreateBiTree(BiTree& T, int definition);
@@ -60,11 +61,17 @@ status PreOrderTraverse(BiTree T, status(*Visit)(BiTreeNode c));
 status InOrderTraverse(BiTree T, status(*Visit)(BiTreeNode c));
 status PostOrderTraverse(BiTree T, status(*Visit)(BiTreeNode c));
 status LevelOrderTraverse(BiTree T, status(*Visit)(BiTreeNode c));
+status SaveTree(BiTree T, char* path);
+status LoadTree(BiTree& T, char* path);
+status ShowAllTrees();
+status GetTree(BiTree& T, int lo);
 status Visit(BiTreeNode c);
+status FilePreOrderCreateBiTree(BiTree& T);
 status PreOrderCreateBiTree(BiTree& T);
 status InPreOrderCreateBiTree(BiTree& T,Data* pre, Data* in,int size);
 status InPostOrderCreateBiTree(BiTree& T,Data* post, Data* in, int size);
 BiTreeNode* FindParent(BiTree T, KeyType e, int& LR);
+int GetSize(char* path);
 /*函数声明结束*/
 
 int main(void) {
@@ -109,7 +116,12 @@ int main(void) {
 		case 2:
 			res = DestroyBiTree(T);
 			if (res == OK)
+			{
 				printf("二叉树销毁成功！\n");
+				treeL.length--;
+				T = treeL.trees[0];
+				flag = 0;
+			}
 			else
 				printf("二叉树不存在！\n");
 			getchar();getchar();
@@ -194,30 +206,94 @@ int main(void) {
 			getchar();getchar();
 			break;
 		case 10:
+			KeyType e_dn;
+			printf("请输入参数（删除关键字）：");
+			scanf("%d", &e_dn);
+			res = DeleteNode(T, e_dn);
+			if (res == ERROR)
+				printf("二叉树不存在！\n");
+			else if (res == INFEASIBLE)
+				printf("不存在关键字为%d的节点！\n", e_dn);
+			else
+				printf("节点删除成功！\n");
 			getchar();getchar();
 			break;
 		case 11:
+			printf("先序遍历：\n");
+			res = PreOrderTraverse(T,Visit);
+			if (res == ERROR)
+				printf("二叉树不存在！\n");
+			else if (res == INFEASIBLE)
+				printf("二叉树为空树！\n");
 			getchar();getchar();
 			break;
 		case 12:
+			printf("中序遍历：\n");
+			res = InOrderTraverse(T, Visit);
+			if (res == ERROR)
+				printf("二叉树不存在！\n");
+			else if (res == INFEASIBLE)
+				printf("二叉树为空树！\n");
 			getchar();getchar();
 			break;
 		case 13:
+			printf("后序遍历：\n");
+			res = PostOrderTraverse(T, Visit);
+			if (res == ERROR)
+				printf("二叉树不存在！\n");
+			else if (res == INFEASIBLE)
+				printf("二叉树为空树！\n");
 			getchar();getchar();
 			break;
 		case 14:
+			printf("按层遍历：\n");
+			res = LevelOrderTraverse(T, Visit);
+			if (res == ERROR)
+				printf("二叉树不存在！\n");
+			else if (res == INFEASIBLE)
+				printf("二叉树为空树！\n");
 			getchar();getchar();
 			break;
 		case 15:
+			char p_s[80];
+			printf("请输入参数（保存路径）：");
+			scanf("%s", p_s);
+			res = SaveTree(T, p_s);
+			if (res == ERROR)
+				printf("二叉树不存在！\n");
+			else if (res == INFEASIBLE)
+				printf("路径错误！\n");
+			else
+				printf("二叉树保存成功！\n");
 			getchar();getchar();
 			break;
 		case 16:
+			char p_l[80];
+			printf("请输入参数（保存路径）：");
+			scanf("%s", p_l);
+			res = LoadTree(T, p_l);
+			if (res == INFEASIBLE)
+				printf("路径错误！\n");
+			else
+				printf("二叉树读取成功！\n");
 			getchar();getchar();
 			break;
 		case 17:
+			printf("----------------------------start------------------------------\n");
+			res = ShowAllTrees();
+			if (res == ERROR)
+				printf("没有树！\n");
 			getchar();getchar();
 			break;
 		case 18:
+			int lo;
+			printf("请输入参数（树编号）:");
+			scanf("%d", &lo);
+			res = GetTree(T, lo);
+			if (res == ERROR)
+				printf("不存在编号为%d的树！\n", lo);
+			else
+				printf("已切换到树%d！\n", lo);
 			getchar();getchar();
 			break;
 		case 0:
@@ -244,7 +320,6 @@ status CreateBiTree(BiTree &T, int definition)
 		}
 		treeL.listsize += INCREAMENT;
 	}
-	T = treeL.trees[treeL.length];
 	flag = treeL.length;
 	switch (definition)
 	{
@@ -289,6 +364,7 @@ status CreateBiTree(BiTree &T, int definition)
 		InPostOrderCreateBiTree(T, input1, input2, size - 1);
 		break;
 	}
+	treeL.trees[treeL.length] = T;
 	return OK;
 }
 status PreOrderCreateBiTree(BiTree& T)
@@ -361,8 +437,6 @@ status DestroyBiTree(BiTree& T)
 	DestroyBiTree(T->lchild);
 	DestroyBiTree(T->rchild);
 	free(T);
-	T = treeL.trees[0];
-	flag = 0;
 	return OK;
 }
 status ClearBiTree(BiTree& T)
@@ -372,6 +446,8 @@ status ClearBiTree(BiTree& T)
 	DestroyBiTree(T->lchild);
 	DestroyBiTree(T->rchild);
 	T->data = { 0,0 };
+	T->lchild = NULL;
+	T->rchild = NULL;
 	return OK;
 }
 status BiTreeEmpty(BiTree T)
@@ -452,70 +528,130 @@ status InsertNode(BiTree& T, KeyType e, int LR, BiTreeNode c)
 	if (!T)
 		return ERROR;
 	BiTreeNode* p = LocateNode(T, e);
+	BiTreeNode* n = (BiTreeNode*)malloc(sizeof(BiTreeNode));
+	if (!n)
+		exit(OVERFLOW);
+	*n = c;
 	if (!p)
 		return INFEASIBLE;
 	if (LR != 0 && LR != 1)
 		return INFEASIBLE;
 	if(LR)
 	{
-		c.rchild = p->lchild;
-		c.lchild = NULL;
-		p->rchild = &c;
+		n->rchild = p->lchild;
+		n->lchild = NULL;
+		p->rchild = n;
 	}
 	else
 	{
-		c.rchild = p->rchild;
-		c.lchild = NULL;
-		p->lchild = &c;
+		n->rchild = p->rchild;
+		n->lchild = NULL;
+		p->lchild = n;
 	}
 	return OK;
 }
 status DeleteNode(BiTree& T, KeyType e)
 {
-	int LR;
+	int LR = 0;
 	if (!T)
 		return ERROR;
-	BiTreeNode* p = FindParent(T, e, LR);
+	BiTreeNode* p;
+	if (T->data.key == e)
+	{
+		p = (BiTreeNode*)malloc(sizeof(BiTreeNode));
+		if (!p)
+			exit(OVERFLOW);
+		p->lchild = T;
+	}
+	else
+		p = FindParent(T, e, LR);
+	if (!p)
+		return INFEASIBLE;
 	BiTreeNode* d;
 	if (LR)
 		d = p->rchild;
 	else
 		d = p->lchild;
 	BiTreeNode* n = d;
-	if(d->lchild && d->rchild)
+	if (p->lchild != T)
 	{
-		if (LR)
-			p->rchild = d->lchild;
+		if (d->lchild && d->rchild)
+		{
+			if (LR)
+				p->rchild = d->lchild;
+			else
+				p->lchild = d->lchild;
+			n = n->lchild;
+			while (n->rchild)
+				n = n->rchild;
+			n->rchild = d->rchild;
+			free(d);
+		}
+		else if (d->lchild)
+		{
+			if (LR)
+				p->rchild = d->lchild;
+			else
+				p->lchild = d->lchild;
+			free(d);
+		}
+		else if (d->rchild)
+		{
+			if (LR)
+				p->rchild = d->rchild;
+			else
+				p->lchild = d->rchild;
+			free(d);
+		}
 		else
-			p->lchild = d->lchild;
-		while (n->rchild)
-			n = n->rchild;
-		n->rchild = d->rchild;
-		free(d);
-	}
-	else if(d->lchild)
-	{
-		if (LR)
-			p->rchild = d->lchild;
-		else
-			p->lchild = d->lchild;
-		free(d);
-	}
-	else if(d->rchild)
-	{
-		if (LR)
-			p->rchild = d->rchild;
-		else
-			p->lchild = d->rchild;
-		free(d);
+		{
+			if (LR)
+				p->rchild = NULL;
+			else
+				p->lchild = NULL;
+			free(d);
+		}
 	}
 	else
 	{
-		if (LR)
-			p->rchild = NULL;
+		if (d->lchild && d->rchild)
+		{
+			if (LR)
+				p->rchild = d->lchild;
+			else
+				p->lchild = d->lchild;
+			n = n->lchild;
+			while (n->rchild)
+				n = n->rchild;
+			n->rchild = d->rchild;
+			free(d);
+		}
+		else if (d->lchild)
+		{
+			if (LR)
+				p->rchild = d->lchild;
+			else
+				p->lchild = d->lchild;
+			free(d);
+		}
+		else if (d->rchild)
+		{
+			if (LR)
+				p->rchild = d->rchild;
+			else
+				p->lchild = d->rchild;
+			free(d);
+		}
 		else
-			p->lchild = NULL;
-		free(d);
+		{
+			if (LR)
+				p->rchild = NULL;
+			else
+				p->lchild = NULL;
+			free(d);
+		}
+		T = p->lchild;
+		treeL.trees[flag] = T;
 	}
 	return OK;
 }
@@ -523,6 +659,8 @@ status PreOrderTraverse(BiTree T, status(* Visit)(BiTreeNode c))
 {
     if(!T)
         return ERROR;
+	if (T->data.key == 0)
+		return INFEASIBLE;
     Visit(*T);
     PreOrderTraverse(T->lchild, Visit);
     PreOrderTraverse(T->rchild, Visit);
@@ -532,9 +670,13 @@ status InOrderTraverse(BiTree T, status(* Visit)(BiTreeNode c))
 {
     if(!T)
         return ERROR;
+	if (T->data.key == 0)
+		return INFEASIBLE;
     BiTree* s;
     int size = pow(2, BiTreeDepth(T));
     s = (BiTree*)malloc(sizeof(BiTree) * size);
+	if (!s)
+		exit(OVERFLOW);
     BiTree n = T;
     int top = 0;
     int bottom = 0;
@@ -547,7 +689,7 @@ status InOrderTraverse(BiTree T, status(* Visit)(BiTreeNode c))
         }    
         else
         {
-            n = s[bottom--];
+            n = s[--bottom];
             Visit(*n);
             n = n->rchild;
         }
@@ -558,6 +700,8 @@ status PostOrderTraverse(BiTree T, status(* Visit)(BiTreeNode c))
 {
     if(!T)
         return ERROR;
+	if (T->data.key == 0)
+		return INFEASIBLE;
     PostOrderTraverse(T->lchild, Visit); 
     PostOrderTraverse(T->rchild, Visit);
     Visit(*T);
@@ -567,9 +711,13 @@ status LevelOrderTraverse(BiTree T, status(* Visit)(BiTreeNode c))
 {
     if(!T)
         return ERROR;
+	if (T->data.key == 0)
+		return INFEASIBLE;
     int size = pow(2, BiTreeDepth(T));
     BiTree* q;
     q = (BiTree*)malloc(sizeof(BiTree) * size);
+	if (!q)
+		exit(OVERFLOW);
     BiTree n = T;
     int top = 0;
     int bottom = 0;
@@ -582,13 +730,113 @@ status LevelOrderTraverse(BiTree T, status(* Visit)(BiTreeNode c))
             q[bottom++] = n->rchild;
         Visit(*n);
         q[top++] = NULL;
-    }while(q[top]);
+		n = q[top];
+    }while(top != bottom);
+	return OK;
+}
+status SaveTree(BiTree T, char* path)
+{
+	if (!T)
+		return ERROR;
+	FILE* tree = fopen(path, "w");
+	if (!tree)
+		return INFEASIBLE;
+	BiTree* s;
+	int size = pow(2, BiTreeDepth(T));
+	s = (BiTree*)malloc(sizeof(BiTree) * size);
+	if (!s)
+		exit(OVERFLOW);
+	BiTree n = T;
+	Data e = { 0,0 };
+	int top = 0;
+	int bottom = 0;
+	while (n || top != bottom)
+	{
+		if (!n)
+			fwrite(&e, sizeof(Data), 1, tree);
+		if (n)
+		{
+			fwrite(&n->data, sizeof(Data), 1, tree);
+			s[bottom++] = n;
+			n = n->lchild;
+		}
+		else
+		{
+			n = s[--bottom];
+			n = n->rchild;
+		}
+	}
+	fwrite(&e, sizeof(Data), 1, tree);
+	fclose(tree);
+	return OK;
+}
+status LoadTree(BiTree& T, char* path)
+{
+	FILE* tree = fopen(path, "r");
+	if (!tree)
+		return INFEASIBLE;
+	int size = GetSize(path);
+	if (!p)
+	{
+		p = (Data*)malloc(sizeof(Data) * size);
+		if (!p)
+			exit(OVERFLOW);
+	}
+	if (p)
+	{
+		Data* temp = p;
+		p = (Data*)realloc(p, sizeof(Data) * size);
+		if(!p)
+		{
+			free(temp);
+			exit(OVERFLOW);
+		}
+	}
+	fread(p, sizeof(Data), size, tree);
+	treeL.length++;
+	if (treeL.length >= treeL.listsize)
+	{
+		BiTree* t = treeL.trees;
+		treeL.trees = (BiTree*)realloc(treeL.trees, sizeof(BiTree) * (treeL.listsize + INCREAMENT));
+		if (!treeL.trees)
+		{
+			free(t);
+			exit(OVERFLOW);
+		}
+		treeL.listsize += INCREAMENT;
+	}
+	flag = treeL.length;
+	Data* temp = p;
+	FilePreOrderCreateBiTree(T);
+	p = temp;
+	treeL.trees[treeL.length] = T;
+	return OK;
+}
+status ShowAllTrees()
+{
+	if (flag == 0)
+		return ERROR;
+	int i;
+	for (i = 1;i <= treeL.length;i++)
+	{
+		printf("编号%d前序序列：", i);
+		PreOrderTraverse(treeL.trees[i],Visit);
+		printf("\n");
+	}
+	printf("----------------------------end------------------------------\n");
+	return OK;
+}
+status GetTree(BiTree& T, int lo)
+{
+	if (lo > treeL.length || lo <= 0)
+		return ERROR;
+	T = treeL.trees[lo];
+	flag = lo;
 	return OK;
 }
 status Visit(BiTreeNode c)
 {
     printf("%d %d ",c.data.key, c.data.value);
-    printf("\n");
 	return OK;
 }
 BiTreeNode* FindParent(BiTree T,KeyType e, int& LR)
@@ -620,4 +868,31 @@ BiTreeNode* FindParent(BiTree T,KeyType e, int& LR)
 		return res;
 	}
 	return res;
+}
+int GetSize(char* path)
+{
+	int count = 0;
+	FILE* tree = fopen(path, "r");
+	if (!tree)
+		return ERROR;
+	Data temp;
+	while (fread(&temp, sizeof(Data), 1, tree))
+		count++;
+	return count;
+}
+status FilePreOrderCreateBiTree(BiTree& T)
+{
+	if (p->key == 0)
+		T = NULL;
+	else
+	{
+		T = (BiTreeNode*)malloc(sizeof(BiTreeNode));
+		if (!T)
+			exit(OVERFLOW);
+		T->data = *p;
+		p = p + 1;
+		FilePreOrderCreateBiTree(T->lchild);
+		p = p + 1;
+		FilePreOrderCreateBiTree(T->rchild);
+	}
 }
