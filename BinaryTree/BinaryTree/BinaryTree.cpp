@@ -22,11 +22,11 @@ typedef int ElemType;
 typedef int KeyType;
 
 /*各结构体定义*/
-typedef struct//节点数据域
+typedef struct Data//节点数据域
 {
 	KeyType key;
 	ElemType value;
-}Data;
+};
 
 typedef struct BiTreeNode //节点
 {
@@ -34,12 +34,12 @@ typedef struct BiTreeNode //节点
 	BiTreeNode* lchild, * rchild;
 }*BiTree;
 
-typedef struct//二叉树线性表
+typedef struct TreeList//二叉树线性表
 {
 	BiTree* trees;
 	int length;
 	int listsize;
-}TreeList;
+};
 /*结构体定义结束*/
 
 TreeList treeL;
@@ -110,7 +110,7 @@ int main(void) {
 			if (res == OK)
 				printf("二叉树构建成功！\n");
 			else
-				printf("错误的定义！\n");
+				printf("错误的定义或序列中有重复的关键字！\n");
 			getchar();getchar();
 			break;
 		case 2:
@@ -118,6 +118,11 @@ int main(void) {
 			if (res == OK)
 			{
 				printf("二叉树销毁成功！\n");
+				int i;
+				for(i = flag;i < treeL.length - 1;i++)
+				{
+					treeL.trees[i] = treeL.trees[i + 1];
+				}
 				treeL.length--;
 				T = treeL.trees[0];
 				flag = 0;
@@ -200,7 +205,7 @@ int main(void) {
 			if (res == ERROR)
 				printf("二叉树不存在！\n");
 			else if (res == INFEASIBLE)
-				printf("关键字为%d的节点不存在或模式错误！\n", e_in);
+				printf("插入错误！可能是不存在关键字为%d的节点，输入了错误的模式，或已存在关键字为%d的节点\n", e_in, c_in.data.key);
 			else
 				printf("节点插入成功！\n");
 			getchar();getchar();
@@ -326,8 +331,36 @@ status CreateBiTree(BiTree &T, int definition)
 	default:
 		return ERROR;
 	case 1:
-		printf("请输入节点数据序列key,value（key为0代表空节点）：");
-		PreOrderCreateBiTree(T);
+		printf("请输入序列长度：");
+		scanf("%d", &size);
+		if (!p)
+		{
+			p = (Data*)malloc(sizeof(Data) * size);
+			if (!p)
+				exit(OVERFLOW);
+		}
+		if (p)
+		{
+			Data* temp = p;
+			p = (Data*)realloc(p, sizeof(Data) * size);
+			if (!p)
+			{
+				free(temp);
+				exit(OVERFLOW);
+			}
+		}
+		printf("请输入节点数据序列(key为0代表空节点）：");
+		for (i = 0;i < size;i++)
+		{
+			scanf("%d%d", &p[i].key, &p[i].value);
+			int j;
+			for (j = 0;j < i;j++)
+				if (p[i].key != 0 && p[j].key == p[i].key)
+					return INFEASIBLE;
+			Data* temp = p;
+			PreOrderCreateBiTree(T);
+			p = temp;
+		}
 		break;
 	case 2:
 		printf("请输入序列长度：");
@@ -338,11 +371,19 @@ status CreateBiTree(BiTree &T, int definition)
 		for (i = 0;i < size;i++)
 		{
 			scanf("%d%d", &input1[i].key, &input1[i].value);
+			int j;
+			for (j = 0;j < i;j++)
+				if (input1[i].key != 0 && input1[j].key == input1[i].key)
+					return INFEASIBLE;
 		}
 		printf("请输入中序遍历序列：");
 		for (i = 0;i < size;i++)
 		{
 			scanf("%d%d", &input2[i].key, &input2[i].value);
+			int j;
+			for (j = 0;j < i;j++)
+				if (input2[i].key != 0 && input2[j].key == input2[i].key)
+					return INFEASIBLE;
 		}
 		InPreOrderCreateBiTree(T, input1, input2, size - 1);
 		break;
@@ -355,11 +396,19 @@ status CreateBiTree(BiTree &T, int definition)
 		for (i = 0;i < size;i++)
 		{
 			scanf("%d%d", &input1[i].key, &input1[i].value);
+			int j;
+			for (j = 0;j < i;j++)
+				if (input1[i].key != 0 && input1[j].key == input1[i].key)
+					return INFEASIBLE;
 		}
 		printf("请输入中序遍历序列：");
 		for (i = 0;i < size;i++)
 		{
 			scanf("%d%d", &input2[i].key, &input2[i].value);
+			int j;
+			for (j = 0;j < i;j++)
+				if (input2[i].key != 0 && input2[j].key == input2[i].key)
+					return INFEASIBLE;
 		}
 		InPostOrderCreateBiTree(T, input1, input2, size - 1);
 		break;
@@ -369,18 +418,18 @@ status CreateBiTree(BiTree &T, int definition)
 }
 status PreOrderCreateBiTree(BiTree& T)
 {
-	Data temp = {0,0};
-	scanf("%d%d", &temp.key, &temp.value);
-	if (temp.key == 0)
+	if (p->key == 0)
 		T = NULL;
 	else
 	{
 		T = (BiTreeNode*)malloc(sizeof(BiTreeNode));
 		if (!T)
 			exit(OVERFLOW);
-		T->data = temp;
-		PreOrderCreateBiTree(T->lchild);
-		PreOrderCreateBiTree(T->rchild);
+		T->data = *p;
+		p = p + 1;
+		FilePreOrderCreateBiTree(T->lchild);
+		p = p + 1;
+		FilePreOrderCreateBiTree(T->rchild);
 	}
 	return OK;
 }
@@ -527,6 +576,8 @@ status InsertNode(BiTree& T, KeyType e, int LR, BiTreeNode c)
 {
 	if (!T)
 		return ERROR;
+	if (LocateNode(T, c.data.key))
+		return INFEASIBLE;
 	BiTreeNode* p = LocateNode(T, e);
 	BiTreeNode* n = (BiTreeNode*)malloc(sizeof(BiTreeNode));
 	if (!n)
@@ -538,13 +589,13 @@ status InsertNode(BiTree& T, KeyType e, int LR, BiTreeNode c)
 		return INFEASIBLE;
 	if(LR)
 	{
-		n->rchild = p->lchild;
+		n->rchild = p->rchild;
 		n->lchild = NULL;
 		p->rchild = n;
 	}
 	else
 	{
-		n->rchild = p->rchild;
+		n->rchild = p->lchild;
 		n->lchild = NULL;
 		p->lchild = n;
 	}
@@ -814,7 +865,7 @@ status LoadTree(BiTree& T, char* path)
 }
 status ShowAllTrees()
 {
-	if (flag == 0)
+	if (treeL.length == 0)
 		return ERROR;
 	int i;
 	for (i = 1;i <= treeL.length;i++)
