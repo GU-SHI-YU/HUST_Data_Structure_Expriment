@@ -44,7 +44,7 @@ typedef struct TreeList//二叉树线性表
 
 TreeList treeL;
 int flag;
-Data* p;
+Data* p; //用于带空子树的前序序列递归创建树
 
 /*函数声明*/
 status CreateBiTree(BiTree& T, int definition);
@@ -119,7 +119,7 @@ int main(void) {
 			{
 				printf("二叉树销毁成功！\n");
 				int i;
-				for(i = flag;i < treeL.length - 1;i++)
+				for(i = flag;i < treeL.length - 1;i++) //从线性表中删除树
 				{
 					treeL.trees[i] = treeL.trees[i + 1];
 				}
@@ -313,19 +313,6 @@ status CreateBiTree(BiTree &T, int definition)
 	int size;
 	Data* input1, * input2;
 	int i;
-	treeL.length++;
-	if(treeL.length >= treeL.listsize)
-	{
-		BiTree* t = treeL.trees;
-		treeL.trees = (BiTree*)realloc(treeL.trees, sizeof(BiTree) * (treeL.listsize + INCREAMENT));
-		if(!treeL.trees)
-		{
-			free(t);
-			exit(OVERFLOW);
-		}
-		treeL.listsize += INCREAMENT;
-	}
-	flag = treeL.length;
 	switch (definition)
 	{
 	default:
@@ -333,7 +320,7 @@ status CreateBiTree(BiTree &T, int definition)
 	case 1:
 		printf("请输入序列长度：");
 		scanf("%d", &size);
-		if (!p)
+		if (!p) //检测全局变量p是否创建
 		{
 			p = (Data*)malloc(sizeof(Data) * size);
 			if (!p)
@@ -354,9 +341,12 @@ status CreateBiTree(BiTree &T, int definition)
 		{
 			scanf("%d%d", &p[i].key, &p[i].value);
 			int j;
-			for (j = 0;j < i;j++)
+			for (j = 0;j < i;j++) //关键字不能重复
 				if (p[i].key != 0 && p[j].key == p[i].key)
+				{
+					setbuf(stdin, NULL); //检测到重复的关键字后清空输入流
 					return INFEASIBLE;
+				}
 			Data* temp = p;
 			PreOrderCreateBiTree(T);
 			p = temp;
@@ -374,7 +364,10 @@ status CreateBiTree(BiTree &T, int definition)
 			int j;
 			for (j = 0;j < i;j++)
 				if (input1[i].key != 0 && input1[j].key == input1[i].key)
+				{
+					setbuf(stdin, NULL);
 					return INFEASIBLE;
+				}
 		}
 		printf("请输入中序遍历序列：");
 		for (i = 0;i < size;i++)
@@ -383,7 +376,10 @@ status CreateBiTree(BiTree &T, int definition)
 			int j;
 			for (j = 0;j < i;j++)
 				if (input2[i].key != 0 && input2[j].key == input2[i].key)
+				{
+					setbuf(stdin, NULL);
 					return INFEASIBLE;
+				}
 		}
 		InPreOrderCreateBiTree(T, input1, input2, size - 1);
 		break;
@@ -399,7 +395,10 @@ status CreateBiTree(BiTree &T, int definition)
 			int j;
 			for (j = 0;j < i;j++)
 				if (input1[i].key != 0 && input1[j].key == input1[i].key)
+				{
+					setbuf(stdin, NULL);
 					return INFEASIBLE;
+				}
 		}
 		printf("请输入中序遍历序列：");
 		for (i = 0;i < size;i++)
@@ -408,15 +407,31 @@ status CreateBiTree(BiTree &T, int definition)
 			int j;
 			for (j = 0;j < i;j++)
 				if (input2[i].key != 0 && input2[j].key == input2[i].key)
+				{
+					setbuf(stdin, NULL);
 					return INFEASIBLE;
+				}
 		}
 		InPostOrderCreateBiTree(T, input1, input2, size - 1);
 		break;
 	}
+	treeL.length++;
+	if (treeL.length >= treeL.listsize) //线性表达到表长
+	{
+		BiTree* t = treeL.trees;
+		treeL.trees = (BiTree*)realloc(treeL.trees, sizeof(BiTree) * (treeL.listsize + INCREAMENT));
+		if (!treeL.trees) // 扩容失败释放原空间
+		{
+			free(t);
+			exit(OVERFLOW);
+		}
+		treeL.listsize += INCREAMENT;
+	}
+	flag = treeL.length;
 	treeL.trees[treeL.length] = T;
 	return OK;
 }
-status PreOrderCreateBiTree(BiTree& T)
+status PreOrderCreateBiTree(BiTree& T) //带空子树的前序序列
 {
 	if (p->key == 0)
 		T = NULL;
@@ -433,7 +448,7 @@ status PreOrderCreateBiTree(BiTree& T)
 	}
 	return OK;
 }
-status InPostOrderCreateBiTree(BiTree& T, Data* post, Data* in, int size)
+status InPostOrderCreateBiTree(BiTree& T, Data* post, Data* in, int size) // 前序+中序创建树
 {
 	if (size < 0)
 	{
@@ -456,7 +471,7 @@ status InPostOrderCreateBiTree(BiTree& T, Data* post, Data* in, int size)
 	InPostOrderCreateBiTree(T->rchild, post + pos, in + pos + 1, size - pos - 1);
 	return OK;
 }
-status InPreOrderCreateBiTree(BiTree& T, Data* pre, Data* in, int size)
+status InPreOrderCreateBiTree(BiTree& T, Data* pre, Data* in, int size) //后序+中序创建树
 {
 	if (size < 0)
 	{
@@ -576,7 +591,7 @@ status InsertNode(BiTree& T, KeyType e, int LR, BiTreeNode c)
 {
 	if (!T)
 		return ERROR;
-	if (LocateNode(T, c.data.key))
+	if (LocateNode(T, c.data.key)) //查找是否有关键字重复的节点
 		return INFEASIBLE;
 	BiTreeNode* p = LocateNode(T, e);
 	BiTreeNode* n = (BiTreeNode*)malloc(sizeof(BiTreeNode));
@@ -624,7 +639,7 @@ status DeleteNode(BiTree& T, KeyType e)
 	else
 		d = p->lchild;
 	BiTreeNode* n = d;
-	if (p->lchild != T)
+	if (p->lchild != T) //判断删除的是否是头结点
 	{
 		if (d->lchild && d->rchild)
 		{
@@ -718,7 +733,7 @@ status PreOrderTraverse(BiTree T, status(* Visit)(BiTreeNode c))
 	return OK;
 }
 status InOrderTraverse(BiTree T, status(* Visit)(BiTreeNode c))
-{
+{ // 使用栈实现
     if(!T)
         return ERROR;
 	if (T->data.key == 0)
@@ -731,16 +746,16 @@ status InOrderTraverse(BiTree T, status(* Visit)(BiTreeNode c))
     BiTree n = T;
     int top = 0;
     int bottom = 0;
-    while(n || top != bottom)
+    while(n || top != bottom) //栈为空且n为NULL跳出循环
     {
         if(n)
         {
-            s[bottom++] = n;
+            s[bottom++] = n; //入栈
             n = n->lchild;
         }    
         else
         {
-            n = s[--bottom];
+            n = s[--bottom]; //出栈
             Visit(*n);
             n = n->rchild;
         }
@@ -766,7 +781,7 @@ status LevelOrderTraverse(BiTree T, status(* Visit)(BiTreeNode c))
 		return INFEASIBLE;
     int size = pow(2, BiTreeDepth(T));
     BiTree* q;
-    q = (BiTree*)malloc(sizeof(BiTree) * size);
+    q = (BiTree*)malloc(sizeof(BiTree) * size); //辅助队列
 	if (!q)
 		exit(OVERFLOW);
     BiTree n = T;
@@ -801,7 +816,7 @@ status SaveTree(BiTree T, char* path)
 	Data e = { 0,0 };
 	int top = 0;
 	int bottom = 0;
-	while (n || top != bottom)
+	while (n || top != bottom) //以栈前序遍历树，构建带空子树的前序序列
 	{
 		if (!n)
 			fwrite(&e, sizeof(Data), 1, tree);
@@ -826,7 +841,7 @@ status LoadTree(BiTree& T, char* path)
 	FILE* tree = fopen(path, "r");
 	if (!tree)
 		return INFEASIBLE;
-	int size = GetSize(path);
+	int size = GetSize(path); //获取文件中树的大小
 	if (!p)
 	{
 		p = (Data*)malloc(sizeof(Data) * size);
@@ -857,9 +872,9 @@ status LoadTree(BiTree& T, char* path)
 		treeL.listsize += INCREAMENT;
 	}
 	flag = treeL.length;
-	Data* temp = p;
+	Data* temp = p; //保存p原始位置
 	FilePreOrderCreateBiTree(T);
-	p = temp;
+	p = temp; //还原p
 	treeL.trees[treeL.length] = T;
 	return OK;
 }
@@ -868,7 +883,7 @@ status ShowAllTrees()
 	if (treeL.length == 0)
 		return ERROR;
 	int i;
-	for (i = 1;i <= treeL.length;i++)
+	for (i = 1;i <= treeL.length;i++) //对每棵树进行前序遍历
 	{
 		printf("编号%d前序序列：", i);
 		PreOrderTraverse(treeL.trees[i],Visit);
@@ -920,7 +935,7 @@ BiTreeNode* FindParent(BiTree T,KeyType e, int& LR)
 	}
 	return res;
 }
-int GetSize(char* path)
+int GetSize(char* path) //获取文件中树的大小
 {
 	int count = 0;
 	FILE* tree = fopen(path, "r");
@@ -931,7 +946,7 @@ int GetSize(char* path)
 		count++;
 	return count;
 }
-status FilePreOrderCreateBiTree(BiTree& T)
+status FilePreOrderCreateBiTree(BiTree& T) //根据文件中的带空子树的前序序列创建树
 {
 	if (p->key == 0)
 		T = NULL;
