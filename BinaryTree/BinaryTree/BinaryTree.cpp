@@ -81,6 +81,7 @@ int main(void) {
 	{
 		exit(OVERFLOW);
 	}
+	treeL.trees[0] = NULL;
 	BiTree T = treeL.trees[0];
 	int res = -1;
 	while (op) {
@@ -192,7 +193,7 @@ int main(void) {
 			if (res_gb == NULL)
 				printf("²éÕÒÒì³££¬¿ÉÄÜÊÇ¶þ²æÊ÷²»´æÔÚ£¬¹Ø¼ü×ÖÎª%dµÄ½Úµã²»´æÔÚ£¬»ò´Ë½ÚµãÃ»ÓÐÐÖµÜ½Úµã£¡\n", e_gb);
 			else
-				printf("ÐÖµÜ½ÚµãµÄ¹Ø¼üÖµÎª%d,ÖµÎª%d!\n", res_gb->data.key, res_gb->data.value);
+				printf("ÐÖµÜ½ÚµãµÄ¹Ø¼ü×ÖÎª%d,ÖµÎª%d!\n", res_gb->data.key, res_gb->data.value);
 			getchar();getchar();
 			break;
 		case 9:
@@ -902,7 +903,7 @@ status GetTree(BiTree& T, int lo)
 }
 status Visit(BiTreeNode c)
 {
-    printf("%d %d ",c.data.key, c.data.value);
+    printf("(%d, %d) ", c.data.key, c.data.value);
 	return OK;
 }
 BiTreeNode* FindParent(BiTree T,KeyType e, int& LR)
@@ -961,4 +962,5 @@ status FilePreOrderCreateBiTree(BiTree& T) //¸ù¾ÝÎÄ¼þÖÐµÄ´ø¿Õ×ÓÊ÷µÄÇ°ÐòÐòÁÐ´´½¨Ê
 		p = p + 1;
 		FilePreOrderCreateBiTree(T->rchild);
 	}
+	return OK;
 }
