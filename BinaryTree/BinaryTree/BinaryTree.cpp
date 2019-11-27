@@ -95,7 +95,7 @@ int main(void) {
 		printf("    	  5. BITreeDepth        14. LevelOrderTraverse\n");
 		printf("    	  6. LocateNode         15. SaveTree\n");
 		printf("    	  7. Assign             16. LoadTree\n");
-		printf("    	  8. GetSibLing         17. ShowAllTrees\n");
+		printf("    	  8. GetSibling         17. ShowAllTrees\n");
 		printf("    	  9. InsertNode         18. GetTree\n");
 		printf("    	  0. Exit\n");
 		printf("-------------------------------------------------\n");
@@ -524,7 +524,7 @@ status BiTreeEmpty(BiTree T)
 	return FALSE;
 }int BiTreeDepth(BiTree T)
 {
-	if (!T)
+	if (!T || T->data.key == 0)
 		return 0;
 	int l, r;
 	l = BiTreeDepth(T->lchild);
