@@ -11,7 +11,11 @@
 #define OK 1
 #define ERROR 0
 #define INFEASIBLE -1
-#define OVERFLOW -2 //常量定义
+#define OVERFLOW -2
+#define DG 1
+#define DN 2
+#define UDG 3
+#define UDN 4 //常量定义
 
 #define INITLENGTH 80
 #define INCREMENT 20
@@ -36,6 +40,7 @@ typedef struct Vertex {
 typedef struct Graph{
 	Vertex elem[MAXVERTEXNUM];
 	char name[80];
+    int type;
 	int vernum;
 	int arcnum;
 };
@@ -96,6 +101,8 @@ int main(void)
 		scanf("%d", &op);
 		switch (op)
 		{
+        default:
+            break;
 		case 1:
 			int asize, vsize;
 			printf("请输入顶点数和边数：");
@@ -218,8 +225,8 @@ status CreateGraph(Graph*& G, Data* V, int* VR)
 		if(VR[i] != VR[i + 1])
 		{
 			p = (ArcNode*)malloc(sizeof(ArcNode));
-			if (!p)
-				exit(OVERFLOW);
+	        if (!p)
+			    exit(OVERFLOW);
 			p->key = G->elem[VR[i]].data.key;
 			p->next = G->elem[VR[i + 1]].firstArc;
 			G->elem[VR[i + 1]].firstArc = p;
@@ -227,4 +234,43 @@ status CreateGraph(Graph*& G, Data* V, int* VR)
 	}
 	graphL.graphs[graphL.length] = G;
 	return OK;
+}
+status BFSTraverse(Graph* G, status(*Visit)(Vertex v))
+{
+    if(!G)
+        return ERROR;
+    int *visited;
+    visited = (int*)malloc(sizeof(int) * G->vernum);
+    if(!visited)
+        exit(OVERFLOW);
+    int i;
+    for(i = 0; i < G->vernum; i++)
+    {
+        visited[i] = 0;
+    }
+    Vertex* q;
+    q = (Vertex*)malloc(sizeof(Vertex) * G->vernum);
+    if(!q)
+        exit(OVERFLOW);
+    int top = 0;
+    int bottom = 0;
+    q[top++] = G->elem[0];
+    visited[0] = 1;
+    Vertex n;
+    while(top != bottom)
+    {
+        n = q[top--];
+        Visit(n);
+        ArcNode* p = n.firstArc;
+        while(p)
+        {
+            if(visited[p->key] == 0)
+            {
+                visited[p->key] = 1;
+                q[top++] = G->elem[p->key];
+            }
+            p = p->next;
+        }
+    }
+    return OK;
 }
