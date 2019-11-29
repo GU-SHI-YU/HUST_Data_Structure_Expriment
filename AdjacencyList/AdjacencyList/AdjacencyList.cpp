@@ -30,7 +30,7 @@ typedef struct Data {
 	ElemType value;
 };
 typedef struct ArcNode {
-	KeyType key;
+	int pos;
 	ArcNode* next;
 };
 typedef struct Vertex {
@@ -40,7 +40,7 @@ typedef struct Vertex {
 typedef struct Graph{
 	Vertex elem[MAXVERTEXNUM];
 	char name[80];
-    int type;
+    //int type;
 	int vernum;
 	int arcnum;
 };
@@ -54,18 +54,20 @@ GraphList graphL;
 
 status CreateGraph(Graph*& G, Data* V, int* VR);
 status DestroyGraph(Graph*& G);
-status LocateVex(Graph* G, KeyType u);
+int LocateVex(Graph* G, KeyType u);
 status PutVex(Graph* G, KeyType u, ElemType value);
 int FirstAdjVex(Graph* G, int u);
 int NextAdjVex(Graph* G, int v, int w);
-status InsertVex(Graph* G, KeyType v);
-status DeleteVex(Graph* G, KeyType v);
-status InsertArc(Graph* G, KeyType v, KeyType w);
-status DelteArc(Graph* G, KeyType v, KeyType w);
+status InsertVex(Graph* G, Vertex v);
+status DeleteVex(Graph* G, int v);
+status InsertArc(Graph* G, int v, int w);
+status DeleteArc(Graph* G, int v, int w);
 status DFSTraverse(Graph* G, status(*Visit)(Vertex v));
 status BFSTraverse(Graph* G, status(*Visit)(Vertex v));
 status SaveGraph(Graph* G, char* path);
 status LoadGraph(Graph* G, char* path);
+status ShowAllGraphs();
+status GetGraph(Graph*& G, char* name);
 status Visit(Vertex v);
 
 int main(void)
@@ -81,7 +83,7 @@ int main(void)
 	strcpy(graphL.graphs[0]->name, "");
 	Graph* G = graphL.graphs[0];//指向当前操作表
 	int op = 1;
-	status res;
+	status res = -1;
 	while (op)
 	{
 		system("cls");	printf("\n\n");
@@ -101,20 +103,20 @@ int main(void)
 		scanf("%d", &op);
 		switch (op)
 		{
-        default:
-            break;
 		case 1:
 			int asize, vsize;
 			printf("请输入顶点数和边数：");
 			scanf("%d%d", &vsize, &asize);
 			printf("请输入顶点集（key，value）：");
-			Data* V = (Data*)malloc(sizeof(Data) * vsize);
+			Data* V;
+			V = (Data*)malloc(sizeof(Data) * vsize);
 			int i;
 			for (i = 0;i < vsize;i++)
 				scanf("%d%d", &V[i].key, &V[i].value);
 			printf("请输入边集(Vi,Vj的顶点角标)：");
-			int* VR = (int*)malloc(sizeof(int) * (asize * 2));
-			for (i = 0;i < asize;i += 2)
+			int* VR;
+			VR = (int*)malloc(sizeof(int) * (asize * 2));
+			for (i = 0;i < asize * 2;i += 2)
 				scanf("%d%d", &VR[i], &VR[i + 1]);
 			G = (Graph*)malloc(sizeof(Graph));
 			if(!G)
@@ -133,18 +135,70 @@ int main(void)
 			getchar();getchar();
 			break;
 		case 2:
+			res = DestroyGraph(G);
+			if (res == OK)
+				printf("无向图销毁成功！\n");
+			else
+				printf("无向图不存在！\n");
 			getchar();getchar();
 			break;
 		case 3:
+			int res_lv;
+			KeyType e_lv;
+			printf("请输入参数（查找关键字）：");
+			scanf("%d", &e_lv);
+			res_lv = LocateVex(G,e_lv);
+			if (res_lv == -2)
+				printf("无向图不存在！\n");
+			else if (res_lv == -1)
+				printf("没有关键字为%d的顶点！\n", e_lv);
+			else
+				printf("找到顶点：关键字%d,值%d！\n", G->elem[res_lv].data.key, G->elem[res_lv].data.value);
 			getchar();getchar();
 			break;
 		case 4:
+			KeyType e_pv;
+			ElemType v_pv;
+			printf("请输入参数（查找关键字和值）：");
+			scanf("%d%d", &e_pv, &v_pv);
+			res = PutVex(G, e_pv, v_pv);
+			if (res == ERROR)
+				printf("无向图不存在！\n");
+			else if (res == INFEASIBLE)
+				printf("无向图不存在关键字为%d的顶点！\n",e_pv);
+			else
+				printf("关键字为%d的顶点已赋值为%d！\n",e_pv,v_pv);
 			getchar();getchar();
 			break;
 		case 5:
+			int res_fa;
+			int e_fa;
+			printf("请输入参数（查找关键字）：");
+			scanf("%d", &e_fa);
+			res_fa = FirstAdjVex(G, e_fa);
+			if (res_fa == -2)
+				printf("无向图不存在！\n");
+			else if (res_fa == -1)
+				printf("没有关键字为%d的顶点！\n", e_fa);
+			else
+				printf("找到关键字为%d顶点第一个邻接点：关键字%d,值%d！\n", G->elem[e_fa].data.key, G->elem[res_fa].data.key, G->elem[res_fa].data.value);
 			getchar();getchar();
 			break;
 		case 6:
+			int res_na;
+			int e_na;
+			int w_na;
+			printf("请输入参数（查找关键字,邻接点关键字）：");
+			scanf("%d%d", &e_na, &w_na);
+			res_na = NextAdjVex(G, e_na, w_na);
+			if (res_na == -2)
+				printf("无向图不存在！\n");
+			else if (res_na == -1)
+				printf("没有关键字为%d的顶点！\n", e_fa);
+			else if (res_na == -3)
+				printf("没有关键字为%d的邻接点！\n", w_na);
+			else
+				printf("找到关键字为%d顶点的关键字为%d的邻接点后一个邻接点：关键字%d,值%d！\n", G->elem[e_na].data.key, G->elem[w_na].data.key, G->elem[res_na].data.key, G->elem[res_na].data.value);
 			getchar();getchar();
 			break;
 		case 7:
@@ -156,10 +210,31 @@ int main(void)
 		case 9:
 			getchar();getchar();
 			break;
+		case 10:
+			getchar();getchar();
+			break;
 		case 11:
+			res = DFSTraverse(G, Visit);
+			if (res == OK)
+			{
+				printf("深度优先遍历完毕！\n");
+			}
+			else
+			{
+				printf("图不存在！\n");
+			}
 			getchar();getchar();
 			break;
 		case 12:
+			res = BFSTraverse(G, Visit);
+			if(res == OK)
+			{
+				printf("宽度优先遍历完毕！\n");
+			}
+			else
+			{
+				printf("图不存在！\n");
+			}
 			getchar();getchar();
 			break;
 		case 13:
@@ -177,9 +252,9 @@ int main(void)
 		case 0:
 			break;
 		}
-		printf("欢迎下次再使用本系统！\n");
-		return 0;
 	}
+	printf("欢迎下次再使用本系统！\n");
+	return 0;
 }
 status CreateGraph(Graph*& G, Data* V, int* VR)
 {
@@ -193,33 +268,23 @@ status CreateGraph(Graph*& G, Data* V, int* VR)
 	if (G->vernum > MAXVERTEXNUM)
 		return OVERFLOW;
 	for (i = 0;i < G->vernum;i++)
-		for (j = i;j < G->vernum;j++)
+		for (j = 0;j < i;j++)
 			if (V[i].key == V[j].key)
+			{
+				setbuf(stdin, NULL);
 				return ERROR;
-	graphL.length++;
-	if(graphL.length >= graphL.listLength)
-	{
-		Graph** tempG = graphL.graphs;
-		graphL.graphs = (Graph**)realloc(graphL.graphs, sizeof(Graph) * (graphL.length + INCREMENT));
-		if(!graphL.graphs)
-		{
-			free(tempG);
-			exit(OVERFLOW);
-		}
-		graphL.listLength += INCREMENT;
-	}
-	strcpy(G->name, temp);
+			}
 	for(i = 0;i < G->vernum;i++)
 	{
 		G->elem[i].data = V[i];
 		G->elem[i].firstArc = NULL;
 	}
-	for(i = 0;i < G->arcnum; i+=2)
+	for(i = 0;i < G->arcnum * 2; i+=2)
 	{
 		ArcNode* p = (ArcNode*)malloc(sizeof(ArcNode));
 		if (!p)
 			exit(OVERFLOW);
-		p->key = G->elem[VR[i + 1]].data.key;
+		p->pos = VR[i + 1];
 		p->next = G->elem[VR[i]].firstArc;
 		G->elem[VR[i]].firstArc = p;
 		if(VR[i] != VR[i + 1])
@@ -227,15 +292,239 @@ status CreateGraph(Graph*& G, Data* V, int* VR)
 			p = (ArcNode*)malloc(sizeof(ArcNode));
 	        if (!p)
 			    exit(OVERFLOW);
-			p->key = G->elem[VR[i]].data.key;
+			p->pos = VR[i];
 			p->next = G->elem[VR[i + 1]].firstArc;
 			G->elem[VR[i + 1]].firstArc = p;
 		}
 	}
+	graphL.length++;
+	if (graphL.length >= graphL.listLength)
+	{
+		Graph** tempG = graphL.graphs;
+		graphL.graphs = (Graph * *)realloc(graphL.graphs, sizeof(Graph) * (graphL.length + INCREMENT));
+		if (!graphL.graphs)
+		{
+			free(tempG);
+			exit(OVERFLOW);
+		}
+		graphL.listLength += INCREMENT;
+	}
+	strcpy(G->name, temp);
 	graphL.graphs[graphL.length] = G;
 	return OK;
 }
-status BFSTraverse(Graph* G, status(*Visit)(Vertex v))
+status DestroyGraph(Graph*& G)
+{
+	if (!G)
+		return ERROR;
+	ArcNode* p, * q;
+	int i;
+	for (i = 0;i < G->vernum;i++)
+	{
+		p = G->elem[i].firstArc;
+		q = p->next;
+		while (p)
+		{
+			free(p);
+			p = q;
+			if(p)
+				q = p->next;
+		}
+	}
+	free(G->elem);
+	int j;
+	for (i = 0;i < graphL.length;i++)
+	{
+		if (strcmp(G->name, graphL.graphs[i]->name))
+			for (j = i;j < graphL.length - 1;j++)
+			{
+				graphL.graphs[j] = graphL.graphs[j + 1];
+			}
+	}
+	graphL.length--;
+	return OK;
+}
+int LocateVex(Graph* G, KeyType u)
+{
+	if (!G)
+		return -2;
+	int i;
+	for(i = 0;i < G->vernum;i++)
+	{
+		if (u == G->elem[i].data.key)
+			return i;
+	}
+	return -1;
+}
+status PutVex(Graph* G, KeyType u, ElemType value)
+{
+	if (!G)
+		return ERROR;
+	int lo = LocateVex(G, u);
+	if (lo == -1)
+		return INFEASIBLE;
+	G->elem[lo].data.value = value;
+	return OK;
+}
+int FirstAdjVex(Graph* G, int u)
+{
+	if (!G)
+		return -2;
+	if (G->elem[u].firstArc)
+		return G->elem[u].firstArc->pos;
+	else
+		return -1;
+}
+int NextAdjVex(Graph* G, int v, int w)
+{
+	if (!G)
+		return -2;
+	ArcNode* p = G->elem[v].firstArc;
+	while(p)
+	{
+		if (p->pos == w)
+			if (p->next)
+				return p->next->pos;
+			else
+				return -1;
+		p = p->next;
+	}
+	return -3;
+}
+status InsertVex(Graph* G, Vertex v)
+{
+	if (!G)
+		return ERROR;
+	if (LocateVex(G, v.data.key) >= 0)
+		return INFEASIBLE;
+	if (G->vernum == MAXVERTEXNUM)
+		return OVERFLOW;
+	G->vernum++;
+	G->elem[G->vernum].data = v.data;
+	return OK;
+}
+status DeleteVex(Graph* G, int v)
+{
+	if (!G)
+		return ERROR;
+	if (v < 0 || v >= G->vernum)
+		return INFEASIBLE;
+	int i;
+	ArcNode* p, * q;
+	for (i = 0;i < G->vernum;i++)
+	{
+		if (i == v)
+		{
+			p = G->elem[i].firstArc;
+			q = p->next;
+			while (p)
+			{
+				free(p);
+				p = q;
+				q = p->next;
+			}
+			G->elem[i].data.key = 0;
+			G->elem[i].firstArc = NULL;
+			continue;
+		}
+		p = G->elem[i].firstArc;
+		q = p->next;
+		if (p->pos == v)
+		{
+			G->elem[i].firstArc = p->next;
+			free(p);
+		}
+		while (p->next)
+		{
+			if(p->next->pos == v)
+			{
+				p->next = q->next;
+				free(q);
+				break;
+			}
+			p = q;
+			if(p)
+				q = p->next;
+		}
+	}
+	return OK;
+}
+status InsertArc(Graph* G, int v, int w)
+{
+	if (!G)
+		return ERROR;
+	if (v < 0 || v >= G->vernum || w < 0 || w > G->vernum)
+		return INFEASIBLE;
+	ArcNode* p = (ArcNode*)malloc(sizeof(ArcNode));
+	if (!p)
+		exit(OVERFLOW);
+	p->pos = w;
+	p->next = G->elem[v].firstArc->next;
+	G->elem[v].firstArc = p;
+	if(v != w)
+	{
+		p = (ArcNode*)malloc(sizeof(ArcNode));
+		if (!p)
+			exit(OVERFLOW);
+		p->pos = v;
+		p->next = G->elem[w].firstArc;
+		G->elem[w].firstArc = p;
+	}
+	return OK;
+}
+status DeleteArc(Graph* G, int v, int w)
+{
+	if (!G)
+		return ERROR;
+	if (v < 0 || v >= G->vernum || w < 0 || w > G->vernum)
+		return INFEASIBLE;
+	ArcNode* p, * q;
+	p = G->elem[v].firstArc;
+	if (!p)
+		return OVERFLOW;
+	q = p->next;
+	if(p->pos == w)
+	{
+		G->elem[v].firstArc = p->next;
+		free(p);
+	}
+	while(p->next)
+	{
+		if(p->next->pos == w)
+		{
+			p->next = p->next->next;
+			free(q);
+			break;
+		}
+		p = p->next;
+		q = q->next;
+	}
+	if (v != w)
+	{
+		p = G->elem[w].firstArc;
+		if (!p)
+			return OVERFLOW;
+		q = p->next;
+		if (p->pos == v)
+		{
+			G->elem[w].firstArc = p->next;
+			free(p);
+		}
+		while (p->next)
+		{
+			if (p->next->pos == v)
+			{
+				p->next = p->next->next;
+				free(q);
+				break;
+			}
+			p = p->next;
+			q = q->next;
+		}
+	}
+	return OK;
+}
+status DFSTraverse(Graph* G, status(*Visit)(Vertex v))
 {
     if(!G)
         return ERROR;
@@ -248,29 +537,178 @@ status BFSTraverse(Graph* G, status(*Visit)(Vertex v))
     {
         visited[i] = 0;
     }
-    Vertex* q;
-    q = (Vertex*)malloc(sizeof(Vertex) * G->vernum);
-    if(!q)
+    Vertex* s;
+    s = (Vertex*)malloc(sizeof(Vertex) * G->vernum);
+    if(!s)
         exit(OVERFLOW);
     int top = 0;
     int bottom = 0;
-    q[top++] = G->elem[0];
+    s[top++] = G->elem[0];
     visited[0] = 1;
     Vertex n;
     while(top != bottom)
     {
-        n = q[top--];
+        n = s[--top];
         Visit(n);
         ArcNode* p = n.firstArc;
         while(p)
         {
-            if(visited[p->key] == 0)
+            if(visited[p->pos] == 0)
             {
-                visited[p->key] = 1;
-                q[top++] = G->elem[p->key];
+                visited[p->pos] = 1;
+                s[top++] = G->elem[p->pos];
             }
             p = p->next;
         }
     }
     return OK;
+}
+status BFSTraverse(Graph* G, status(* Visit)(Vertex v))
+{
+	if (!G)
+		return ERROR;
+	int* visited;
+	visited = (int*)malloc(sizeof(int) * G->vernum);
+	if (!visited)
+		exit(OVERFLOW);
+	int i;
+	for (i = 0; i < G->vernum; i++)
+	{
+		visited[i] = 0;
+	}
+	Vertex* q;
+	q = (Vertex*)malloc(sizeof(Vertex) * G->vernum);
+	if (!q)
+		exit(OVERFLOW);
+	int top = 0;
+	int bottom = 0;
+	q[bottom++] = G->elem[0];
+	visited[0] = 1;
+	Vertex n;
+	while (top != bottom)
+	{
+		n = q[top++];
+		Visit(n);
+		ArcNode* p = n.firstArc;
+		while (p)
+		{
+			if (visited[p->pos] == 0)
+			{
+				visited[p->pos] = 1;
+				q[bottom++] = G->elem[p->pos];
+			}
+			p = p->next;
+		}
+	}
+	return OK;
+}
+status SaveGraph(Graph* G, char* path)
+{
+	if (!G)
+		return ERROR;
+	FILE* graph = fopen(path, "w");
+	if (!graph)
+		return INFEASIBLE;
+	fwrite(&G->vernum, sizeof(int), 1, graph);
+	fwrite(&G->arcnum, sizeof(int), 1, graph);
+	int i;
+	int end = -1;
+	ArcNode* p;
+	for (i = 0;i < G->vernum;i++)
+	{
+		fwrite(&G->elem[i].data, sizeof(Data), 1, graph);
+		p = G->elem[i].firstArc;
+		while(p)
+		{
+			fwrite(&p->pos, sizeof(int), 1, graph);
+			p = p->next;
+		}
+		fwrite(&end, sizeof(int), 1, graph);
+	}
+	return OK;
+}
+status LoadGraph(Graph* G, char* path)
+{
+	if (!G)
+		return ERROR;
+	FILE* graph = fopen(path, "w");
+	if (!graph)
+		return INFEASIBLE;
+	printf("请输入图名：");
+	char temp[80];
+	scanf("%s", temp);
+	int i;
+	for (i = 1;i < graphL.length;i++)
+		if (strcmp(temp, graphL.graphs[i]->name))
+			return OVERFLOW;
+	fread(&G->vernum, sizeof(int), 1, graph);
+	fread(&G->arcnum, sizeof(int), 1, graph);
+	ArcNode* p;
+	for(i = 0;i < G->vernum;i++)
+	{
+		fread(&G->elem[i].data, sizeof(Data), 1, graph);
+		G->elem[i].firstArc = NULL;
+		while (true)
+		{
+			p = (ArcNode*)malloc(sizeof(ArcNode));
+			if (!p)
+				exit(OVERFLOW);
+			fread(&p->pos, sizeof(int), 1, graph);
+			if(p->pos == -1)
+			{
+				free(p);
+				break;
+			}
+			p->next = G->elem[i].firstArc;
+			G->elem[i].firstArc = p;
+		}
+	}
+	graphL.length++;
+	if (graphL.length >= graphL.listLength)
+	{
+		Graph** tempG = graphL.graphs;
+		graphL.graphs = (Graph * *)realloc(graphL.graphs, sizeof(Graph) * (graphL.length + INCREMENT));
+		if (!graphL.graphs)
+		{
+			free(tempG);
+			exit(OVERFLOW);
+		}
+		graphL.listLength += INCREMENT;
+	}
+	graphL.graphs[graphL.length] = G;
+	strcpy(G->name, temp);
+	return OK;
+}
+status ShowAllGraphs()
+{
+	if (graphL.length == 0)
+		return ERROR;
+	printf("---------------------start-------------------------\n");
+	int i;
+	for(i = 1;i <= graphL.length;i++)
+	{
+		printf("图名：%s BFT序列：",graphL.graphs[i]->name);
+		BFSTraverse(graphL.graphs[i], Visit);
+		printf("\n");
+	}
+	printf("----------------------end--------------------------\n");
+	return OK;
+}
+status GetGraph(Graph*& G, char* name)
+{
+	int i;
+	for(i = 1;i <= graphL.length;i++)
+	{
+		if (strcmp(graphL.graphs[i]->name, name))
+		{
+			G = graphL.graphs[i];
+			return OK;
+		}
+	}
+	return ERROR;
+}
+status Visit(Vertex v)
+{
+	printf("(%d, %d) ", v.data.key, v.data.value);
+	return OK;
 }
