@@ -65,7 +65,7 @@ status DeleteArc(Graph* G, int v, int w);
 status DFSTraverse(Graph* G, status(*Visit)(Vertex v));
 status BFSTraverse(Graph* G, status(*Visit)(Vertex v));
 status SaveGraph(Graph* G, char* path);
-status LoadGraph(Graph* G, char* path);
+status LoadGraph(Graph*& G, char* path);
 status ShowAllGraphs();
 status GetGraph(Graph*& G, char* name);
 status Visit(Vertex v);
@@ -173,44 +173,90 @@ int main(void)
 		case 5:
 			int res_fa;
 			int e_fa;
-			printf("请输入参数（查找关键字）：");
+			printf("请输入参数（查找顶点角标）：");
 			scanf("%d", &e_fa);
 			res_fa = FirstAdjVex(G, e_fa);
 			if (res_fa == -2)
 				printf("无向图不存在！\n");
 			else if (res_fa == -1)
-				printf("没有关键字为%d的顶点！\n", e_fa);
+				printf("角标为%d的顶点没有邻接点！\n", e_fa);
+			else if (res_fa == -3)
+				printf("输入参数有误！\n");
 			else
-				printf("找到关键字为%d顶点第一个邻接点：关键字%d,值%d！\n", G->elem[e_fa].data.key, G->elem[res_fa].data.key, G->elem[res_fa].data.value);
+				printf("找到角标为%d顶点第一个邻接点：关键字%d,值%d！\n", G->elem[e_fa].data.key, G->elem[res_fa].data.key, G->elem[res_fa].data.value);
 			getchar();getchar();
 			break;
 		case 6:
 			int res_na;
 			int e_na;
 			int w_na;
-			printf("请输入参数（查找关键字,邻接点关键字）：");
+			printf("请输入参数（查找顶点角标,邻接点角标）：");
 			scanf("%d%d", &e_na, &w_na);
 			res_na = NextAdjVex(G, e_na, w_na);
 			if (res_na == -2)
 				printf("无向图不存在！\n");
 			else if (res_na == -1)
-				printf("没有关键字为%d的顶点！\n", e_fa);
+				printf("没有角标为%d的顶点！\n", e_fa);
 			else if (res_na == -3)
-				printf("没有关键字为%d的邻接点！\n", w_na);
+				printf("输入参数有误！\n");
 			else
-				printf("找到关键字为%d顶点的关键字为%d的邻接点后一个邻接点：关键字%d,值%d！\n", G->elem[e_na].data.key, G->elem[w_na].data.key, G->elem[res_na].data.key, G->elem[res_na].data.value);
+				printf("找到角标为%d顶点的角标为%d的邻接点后一个邻接点：关键字%d,值%d！\n", G->elem[e_na].data.key, G->elem[w_na].data.key, G->elem[res_na].data.key, G->elem[res_na].data.value);
 			getchar();getchar();
 			break;
 		case 7:
+			Vertex v_iv;
+			printf("请输入参数（插入节点关键字，值）：");
+			scanf("%d%d", &v_iv.data.key, &v_iv.data.value);
+			res = InsertVex(G, v_iv);
+			if (res == ERROR)
+				printf("无向图不存在！\n");
+			else if (res == INFEASIBLE)
+				printf("已经存在关键字为%d的顶点！\n", v_iv.data.key);
+			else if (res == OVERFLOW)
+				printf("图顶点已达最大值！\n");
+			else
+				printf("顶点已插入！\n");
 			getchar();getchar();
 			break;
 		case 8:
+			int v_dv;
+			printf("请输入参数（删除节点角标）：");
+			scanf("%d", &v_dv);
+			res = DeleteVex(G, v_dv);
+			if (res == ERROR)
+				printf("无向图不存在！\n");
+			else if (res == INFEASIBLE)
+				printf("不存在角标为%d的顶点！\n", v_dv);
+			else
+				printf("顶点已删除！\n");
 			getchar();getchar();
 			break;
 		case 9:
+			int v_ia;
+			int w_ia;
+			printf("请输入参数（插入边顶点角标i, j）：");
+			scanf("%d%d", &v_ia, &w_ia);
+			res = InsertArc(G, v_ia, w_ia);
+			if (res == ERROR)
+				printf("无向图不存在！\n");
+			else if (res == INFEASIBLE)
+				printf("不存在角标为%d或%d的顶点！\n", v_ia, w_ia);
+			else
+				printf("边已插入！\n");
 			getchar();getchar();
 			break;
 		case 10:
+			int v_da;
+			int w_da;
+			printf("请输入参数（删除边顶点角标i, j）：");
+			scanf("%d%d", &v_da, &w_da);
+			res = DeleteArc(G, v_da, w_da);
+			if (res == ERROR)
+				printf("无向图不存在！\n");
+			else if (res == INFEASIBLE)
+				printf("不存在角标为%d或%d的顶点！\n", v_ia, w_ia);
+			else
+				printf("边已删除！\n");
 			getchar();getchar();
 			break;
 		case 11:
@@ -238,15 +284,50 @@ int main(void)
 			getchar();getchar();
 			break;
 		case 13:
+			char path_sg[80];
+			printf("请输入参数（保存路径）：");
+			scanf("%s", path_sg);
+			res = SaveGraph(G, path_sg);
+			if (res == ERROR)
+				printf("无向图不存在！\n");
+			else if (res == INFEASIBLE)
+				printf("路径错误！\n");
+			else
+				printf("图已保存！\n");
 			getchar();getchar();
 			break;
 		case 14:
+			char path_lg[80];
+			printf("请输入参数（保存路径）：");
+			scanf("%s", path_lg);
+			res = LoadGraph(G, path_lg);
+			if (res == INFEASIBLE)
+				printf("路径错误！\n");
+			if (res == OVERFLOW)
+				printf("已存在图名为%s的图！\n",path_lg);
+			else
+				printf("图已加载到%s！\n",G->name);
 			getchar();getchar();
 			break;
 		case 15:
+			res = ShowAllGraphs();
+			if (res == ERROR)
+				printf("图线性表为空！\n");
+			else
+				printf("所有图的宽度优先序列打印完毕！\n");
 			getchar();getchar();
 			break;
 		case 16:
+			char name_gg[80];
+			printf("请输入参数（图名）");
+			scanf("%s", name_gg);
+			res = GetGraph(G, name_gg);
+			if (res == ERROR)
+				printf("图线性表为空！\n");
+			else if (res == INFEASIBLE)
+				printf("没有名字为%s的图！\n", name_gg);
+			else
+				printf("已切换到%s！\n", name_gg);
 			getchar();getchar();
 			break;
 		case 0:
@@ -262,8 +343,8 @@ status CreateGraph(Graph*& G, Data* V, int* VR)
 	printf("请输入图名：");
 	scanf("%s", temp);
 	int i, j;
-	for (i = 1;i < graphL.length;i++)
-		if (strcmp(temp, graphL.graphs[i]->name))
+	for (i = 1;i <= graphL.length;i++)
+		if (!strcmp(temp, graphL.graphs[i]->name))
 			return INFEASIBLE;
 	if (G->vernum > MAXVERTEXNUM)
 		return OVERFLOW;
@@ -322,6 +403,8 @@ status DestroyGraph(Graph*& G)
 	for (i = 0;i < G->vernum;i++)
 	{
 		p = G->elem[i].firstArc;
+		if (!p)
+			continue;
 		q = p->next;
 		while (p)
 		{
@@ -342,6 +425,7 @@ status DestroyGraph(Graph*& G)
 			}
 	}
 	graphL.length--;
+	G = graphL.graphs[0];
 	return OK;
 }
 int LocateVex(Graph* G, KeyType u)
@@ -372,6 +456,8 @@ int FirstAdjVex(Graph* G, int u)
 		return -2;
 	if (G->elem[u].firstArc)
 		return G->elem[u].firstArc->pos;
+	if (u < 0 || u >= G->vernum || G->elem[u].data.key == 0)
+		return -3;
 	else
 		return -1;
 }
@@ -380,6 +466,8 @@ int NextAdjVex(Graph* G, int v, int w)
 	if (!G)
 		return -2;
 	ArcNode* p = G->elem[v].firstArc;
+	if (v < 0 || v >= G->vernum || G->elem[v].data.key == 0 || w < 0 || w >= G->vernum || G->elem[w].data.key == 0)
+		return -3;
 	while(p)
 	{
 		if (p->pos == w)
@@ -400,14 +488,15 @@ status InsertVex(Graph* G, Vertex v)
 	if (G->vernum == MAXVERTEXNUM)
 		return OVERFLOW;
 	G->vernum++;
-	G->elem[G->vernum].data = v.data;
+	G->elem[G->vernum - 1].data = v.data;
+	G->elem[G->vernum - 1].firstArc = NULL;
 	return OK;
 }
 status DeleteVex(Graph* G, int v)
 {
 	if (!G)
 		return ERROR;
-	if (v < 0 || v >= G->vernum)
+	if (v < 0 || v >= G->vernum || G->elem[v].data.key == 0)
 		return INFEASIBLE;
 	int i;
 	ArcNode* p, * q;
@@ -421,13 +510,16 @@ status DeleteVex(Graph* G, int v)
 			{
 				free(p);
 				p = q;
-				q = p->next;
+				if(p)
+					q = p->next;
 			}
 			G->elem[i].data.key = 0;
 			G->elem[i].firstArc = NULL;
 			continue;
 		}
 		p = G->elem[i].firstArc;
+		if (!p)
+			continue;
 		q = p->next;
 		if (p->pos == v)
 		{
@@ -453,13 +545,13 @@ status InsertArc(Graph* G, int v, int w)
 {
 	if (!G)
 		return ERROR;
-	if (v < 0 || v >= G->vernum || w < 0 || w > G->vernum)
+	if (v < 0 || v >= G->vernum || G->elem[v].data.key == 0 || w < 0 || w > G->vernum || G->elem[w].data.key == 0)
 		return INFEASIBLE;
 	ArcNode* p = (ArcNode*)malloc(sizeof(ArcNode));
 	if (!p)
 		exit(OVERFLOW);
 	p->pos = w;
-	p->next = G->elem[v].firstArc->next;
+	p->next = G->elem[v].firstArc;
 	G->elem[v].firstArc = p;
 	if(v != w)
 	{
@@ -476,7 +568,7 @@ status DeleteArc(Graph* G, int v, int w)
 {
 	if (!G)
 		return ERROR;
-	if (v < 0 || v >= G->vernum || w < 0 || w > G->vernum)
+	if (v < 0 || v >= G->vernum || G->elem[v].data.key == 0 || w < 0 || w > G->vernum || G->elem[w].data.key == 0)
 		return INFEASIBLE;
 	ArcNode* p, * q;
 	p = G->elem[v].firstArc;
@@ -616,33 +708,37 @@ status SaveGraph(Graph* G, char* path)
 	ArcNode* p;
 	for (i = 0;i < G->vernum;i++)
 	{
-		fwrite(&G->elem[i].data, sizeof(Data), 1, graph);
+		fwrite(&(G->elem[i].data), sizeof(Data), 1, graph);
 		p = G->elem[i].firstArc;
 		while(p)
 		{
-			fwrite(&p->pos, sizeof(int), 1, graph);
+			fwrite(&(p->pos), sizeof(int), 1, graph);
 			p = p->next;
 		}
 		fwrite(&end, sizeof(int), 1, graph);
 	}
+	fclose(graph);
 	return OK;
 }
-status LoadGraph(Graph* G, char* path)
+status LoadGraph(Graph*& G, char* path)
 {
 	if (!G)
 		return ERROR;
-	FILE* graph = fopen(path, "w");
+	G = (Graph*)malloc(sizeof(Graph));
+	if (!G)
+		exit(OVERFLOW);
+	FILE* graph = fopen(path, "r");
 	if (!graph)
 		return INFEASIBLE;
 	printf("请输入图名：");
 	char temp[80];
 	scanf("%s", temp);
 	int i;
-	for (i = 1;i < graphL.length;i++)
-		if (strcmp(temp, graphL.graphs[i]->name))
+	for (i = 1;i <= graphL.length;i++)
+		if (!strcmp(temp, graphL.graphs[i]->name))
 			return OVERFLOW;
-	fread(&G->vernum, sizeof(int), 1, graph);
-	fread(&G->arcnum, sizeof(int), 1, graph);
+	fread(&(G->vernum), sizeof(int), 1, graph);
+	fread(&(G->arcnum), sizeof(int), 1, graph);
 	ArcNode* p;
 	for(i = 0;i < G->vernum;i++)
 	{
@@ -677,6 +773,7 @@ status LoadGraph(Graph* G, char* path)
 	}
 	graphL.graphs[graphL.length] = G;
 	strcpy(G->name, temp);
+	fclose(graph);
 	return OK;
 }
 status ShowAllGraphs()
@@ -699,7 +796,7 @@ status GetGraph(Graph*& G, char* name)
 	int i;
 	for(i = 1;i <= graphL.length;i++)
 	{
-		if (strcmp(graphL.graphs[i]->name, name))
+		if (!strcmp(graphL.graphs[i]->name, name))
 		{
 			G = graphL.graphs[i];
 			return OK;
