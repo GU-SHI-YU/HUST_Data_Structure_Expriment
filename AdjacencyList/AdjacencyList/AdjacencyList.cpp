@@ -201,7 +201,6 @@ int main(void)
 				printf("输入参数有误！\n");
 			else
 				printf("找到关键字为%d顶点的角标为%d的邻接点后一个邻接点：关键字%d,值%d！\n", G->elem[e_na].data.key, G->elem[w_na].data.key, G->elem[res_na].data.key, G->elem[res_na].data.value);
-				printf("找到关键字为%d顶点的角标为%d的邻接点后一个邻接点：关键字%d,值%d！\n", G->elem[e_na].data.key, G->elem[w_na].data.key, G->elem[res_na].data.key, G->elem[res_na].data.value);
 			getchar();getchar();
 			break;
 		case 7:
@@ -255,7 +254,7 @@ int main(void)
 			if (res == ERROR)
 				printf("无向图不存在！\n");
 			else if (res == INFEASIBLE)
-				printf("不存在角标为%d或%d的顶点！\n", v_ia, w_ia);
+				printf("不存在角标为%d或%d的顶点！\n", v_da, w_da);
 			else
 				printf("边已删除！\n");
 			getchar();getchar();
@@ -356,6 +355,11 @@ status CreateGraph(Graph*& G, Data* V, int* VR)
 				setbuf(stdin, NULL); //清空输入流
 				return ERROR;
 			}
+	for(i = 0;i < 20;i++)
+	{
+		G->elem[i].data.key = 0;
+		G->elem[i].firstArc = NULL;
+	}
 	for(i = 0;i < G->vernum;i++)
 	{
 		G->elem[i].data = V[i];
@@ -751,11 +755,11 @@ status SaveGraph(Graph* G, char* path)
 	int i;
 	int end = -1;
 	ArcNode* p;
-	for (i = 0;i < G->vernum;i++)
+	for (i = 0;i < 20;i++)
 	{
 		fwrite(&(G->elem[i].data), sizeof(Data), 1, graph);
 		p = G->elem[i].firstArc;
-		while(p)
+		while (p)
 		{
 			fwrite(&(p->pos), sizeof(int), 1, graph);
 			p = p->next;
@@ -785,7 +789,7 @@ status LoadGraph(Graph*& G, char* path)
 	fread(&(G->vernum), sizeof(int), 1, graph);
 	fread(&(G->arcnum), sizeof(int), 1, graph);
 	ArcNode* p;
-	for(i = 0;i < G->vernum;i++)
+	for(i = 0;i < 20;i++)
 	{
 		fread(&G->elem[i].data, sizeof(Data), 1, graph);
 		G->elem[i].firstArc = NULL;
