@@ -15,11 +15,11 @@
 #define DG 1
 #define DN 2
 #define UDG 3
-#define UDN 4 //常量定义
+#define UDN 4 
 
 #define INITLENGTH 80
 #define INCREMENT 20
-#define MAXVERTEXNUM 20
+#define MAXVERTEXNUM 20 //常量定义
 
 typedef int status;
 typedef int ElemType;
@@ -48,10 +48,10 @@ typedef struct GraphList{
 	Graph** graphs;
 	int length;
 	int listLength;
-};
+}; //结构体类型定义
 
 GraphList graphL;
-
+/*函数定义开始*/
 status CreateGraph(Graph*& G, Data* V, int* VR);
 status DestroyGraph(Graph*& G);
 int LocateVex(Graph* G, KeyType u);
@@ -69,7 +69,7 @@ status LoadGraph(Graph*& G, char* path);
 status ShowAllGraphs();
 status GetGraph(Graph*& G, char* name);
 status Visit(Vertex v);
-
+/*函数定义结束*/
 int main(void)
 {
 	graphL.graphs = (Graph**)malloc(sizeof(Graph*) * INITLENGTH);
@@ -81,7 +81,7 @@ int main(void)
 	if (!graphL.graphs[0])
 		exit(OVERFLOW);
 	strcpy(graphL.graphs[0]->name, "");
-	Graph* G = graphL.graphs[0];//指向当前操作表
+	Graph* G = graphL.graphs[0];//指向当前操作图
 	int op = 1;
 	status res = -1;
 	while (op)
@@ -183,7 +183,7 @@ int main(void)
 			else if (res_fa == -3)
 				printf("输入参数有误！\n");
 			else
-				printf("找到角标为%d顶点第一个邻接点：关键字%d,值%d！\n", G->elem[e_fa].data.key, G->elem[res_fa].data.key, G->elem[res_fa].data.value);
+				printf("找到关键字为%d顶点第一个邻接点：关键字%d,值%d！\n", G->elem[e_fa].data.key, G->elem[res_fa].data.key, G->elem[res_fa].data.value);
 			getchar();getchar();
 			break;
 		case 6:
@@ -200,7 +200,8 @@ int main(void)
 			else if (res_na == -3)
 				printf("输入参数有误！\n");
 			else
-				printf("找到角标为%d顶点的角标为%d的邻接点后一个邻接点：关键字%d,值%d！\n", G->elem[e_na].data.key, G->elem[w_na].data.key, G->elem[res_na].data.key, G->elem[res_na].data.value);
+				printf("找到关键字为%d顶点的角标为%d的邻接点后一个邻接点：关键字%d,值%d！\n", G->elem[e_na].data.key, G->elem[w_na].data.key, G->elem[res_na].data.key, G->elem[res_na].data.value);
+				printf("找到关键字为%d顶点的角标为%d的邻接点后一个邻接点：关键字%d,值%d！\n", G->elem[e_na].data.key, G->elem[w_na].data.key, G->elem[res_na].data.key, G->elem[res_na].data.value);
 			getchar();getchar();
 			break;
 		case 7:
@@ -343,16 +344,16 @@ status CreateGraph(Graph*& G, Data* V, int* VR)
 	printf("请输入图名：");
 	scanf("%s", temp);
 	int i, j;
-	for (i = 1;i <= graphL.length;i++)
+	for (i = 1;i <= graphL.length;i++) //检测图名是否唯一
 		if (!strcmp(temp, graphL.graphs[i]->name))
 			return INFEASIBLE;
 	if (G->vernum > MAXVERTEXNUM)
 		return OVERFLOW;
 	for (i = 0;i < G->vernum;i++)
 		for (j = 0;j < i;j++)
-			if (V[i].key == V[j].key)
+			if (V[i].key == V[j].key) //检测关键字是否唯一
 			{
-				setbuf(stdin, NULL);
+				setbuf(stdin, NULL); //清空输入流
 				return ERROR;
 			}
 	for(i = 0;i < G->vernum;i++)
@@ -379,7 +380,7 @@ status CreateGraph(Graph*& G, Data* V, int* VR)
 		}
 	}
 	graphL.length++;
-	if (graphL.length >= graphL.listLength)
+	if (graphL.length >= graphL.listLength) //如果图表达到上限，扩展表
 	{
 		Graph** tempG = graphL.graphs;
 		graphL.graphs = (Graph * *)realloc(graphL.graphs, sizeof(Graph) * (graphL.length + INCREMENT));
@@ -416,7 +417,7 @@ status DestroyGraph(Graph*& G)
 	}
 	free(G->elem);
 	int j;
-	for (i = 0;i < graphL.length;i++)
+	for (i = 0;i < graphL.length;i++) //从图表中删除图
 	{
 		if (strcmp(G->name, graphL.graphs[i]->name))
 			for (j = i;j < graphL.length - 1;j++)
@@ -444,7 +445,7 @@ status PutVex(Graph* G, KeyType u, ElemType value)
 {
 	if (!G)
 		return ERROR;
-	int lo = LocateVex(G, u);
+	int lo = LocateVex(G, u); //找到顶点
 	if (lo == -1)
 		return INFEASIBLE;
 	G->elem[lo].data.value = value;
@@ -456,7 +457,7 @@ int FirstAdjVex(Graph* G, int u)
 		return -2;
 	if (G->elem[u].firstArc)
 		return G->elem[u].firstArc->pos;
-	if (u < 0 || u >= G->vernum || G->elem[u].data.key == 0)
+	if (u < 0 || u >= G->vernum || G->elem[u].data.key == 0) //顶点是否存在
 		return -3;
 	else
 		return -1;
@@ -466,7 +467,7 @@ int NextAdjVex(Graph* G, int v, int w)
 	if (!G)
 		return -2;
 	ArcNode* p = G->elem[v].firstArc;
-	if (v < 0 || v >= G->vernum || G->elem[v].data.key == 0 || w < 0 || w >= G->vernum || G->elem[w].data.key == 0)
+	if (v < 0 || v >= G->vernum || G->elem[v].data.key == 0 || w < 0 || w >= G->vernum || G->elem[w].data.key == 0) //顶点是否存在
 		return -3;
 	while(p)
 	{
@@ -483,7 +484,7 @@ status InsertVex(Graph* G, Vertex v)
 {
 	if (!G)
 		return ERROR;
-	if (LocateVex(G, v.data.key) >= 0)
+	if (LocateVex(G, v.data.key) >= 0) //检查关键字是否已存在
 		return INFEASIBLE;
 	if (G->vernum == MAXVERTEXNUM)
 		return OVERFLOW;
@@ -502,7 +503,7 @@ status DeleteVex(Graph* G, int v)
 	ArcNode* p, * q;
 	for (i = 0;i < G->vernum;i++)
 	{
-		if (i == v)
+		if (i == v) //删除顶点及顶点内的边
 		{
 			p = G->elem[i].firstArc;
 			q = p->next;
@@ -521,31 +522,33 @@ status DeleteVex(Graph* G, int v)
 		if (!p)
 			continue;
 		q = p->next;
-		if (p->pos == v)
+		if (p->pos == v) //删除其他顶点内连接到删除顶点的边
 		{
 			G->elem[i].firstArc = p->next;
 			free(p);
 		}
-		while (p->next)
-		{
-			if(p->next->pos == v)
+		else
+			while (p->next)
 			{
-				p->next = q->next;
-				free(q);
-				break;
+				if(p->next->pos == v)
+				{
+					p->next = q->next;
+					free(q);
+					break;
+				}
+				p = q;
+				if(p)
+					q = p->next;
 			}
-			p = q;
-			if(p)
-				q = p->next;
-		}
 	}
+	G->vernum--;
 	return OK;
 }
 status InsertArc(Graph* G, int v, int w)
 {
 	if (!G)
 		return ERROR;
-	if (v < 0 || v >= G->vernum || G->elem[v].data.key == 0 || w < 0 || w > G->vernum || G->elem[w].data.key == 0)
+	if (v < 0 || v >= G->vernum || G->elem[v].data.key == 0 || w < 0 || w > G->vernum || G->elem[w].data.key == 0) //检查顶点是否存在
 		return INFEASIBLE;
 	ArcNode* p = (ArcNode*)malloc(sizeof(ArcNode));
 	if (!p)
@@ -562,13 +565,14 @@ status InsertArc(Graph* G, int v, int w)
 		p->next = G->elem[w].firstArc;
 		G->elem[w].firstArc = p;
 	}
+	G->arcnum++;
 	return OK;
 }
 status DeleteArc(Graph* G, int v, int w)
 {
 	if (!G)
 		return ERROR;
-	if (v < 0 || v >= G->vernum || G->elem[v].data.key == 0 || w < 0 || w > G->vernum || G->elem[w].data.key == 0)
+	if (v < 0 || v >= G->vernum || G->elem[v].data.key == 0 || w < 0 || w > G->vernum || G->elem[w].data.key == 0) //检查顶点是否存在
 		return INFEASIBLE;
 	ArcNode* p, * q;
 	p = G->elem[v].firstArc;
@@ -580,18 +584,19 @@ status DeleteArc(Graph* G, int v, int w)
 		G->elem[v].firstArc = p->next;
 		free(p);
 	}
-	while(p->next)
-	{
-		if(p->next->pos == w)
+	else
+		while(p->next)
 		{
-			p->next = p->next->next;
-			free(q);
-			break;
+			if(p->next->pos == w)
+			{
+				p->next = p->next->next;
+				free(q);
+				break;
+			}
+			p = p->next;
+			q = p->next;
 		}
-		p = p->next;
-		q = q->next;
-	}
-	if (v != w)
+	if (v != w) 
 	{
 		p = G->elem[w].firstArc;
 		if (!p)
@@ -602,18 +607,20 @@ status DeleteArc(Graph* G, int v, int w)
 			G->elem[w].firstArc = p->next;
 			free(p);
 		}
-		while (p->next)
-		{
-			if (p->next->pos == v)
+		else
+			while (p->next)
 			{
-				p->next = p->next->next;
-				free(q);
-				break;
+				if (p->next->pos == v)
+				{
+					p->next = p->next->next;
+					free(q);
+					break;
+				}
+				p = p->next;
+				q = q->next;
 			}
-			p = p->next;
-			q = q->next;
-		}
 	}
+	G->arcnum--;
 	return OK;
 }
 status DFSTraverse(Graph* G, status(*Visit)(Vertex v))
@@ -621,38 +628,57 @@ status DFSTraverse(Graph* G, status(*Visit)(Vertex v))
     if(!G)
         return ERROR;
     int *visited;
-    visited = (int*)malloc(sizeof(int) * G->vernum);
+	int count = 0;
+    visited = (int*)malloc(sizeof(int) * 20); //保存顶点是否被访问过
     if(!visited)
         exit(OVERFLOW);
     int i;
-    for(i = 0; i < G->vernum; i++)
+    for(i = 0; i < 20; i++)
     {
         visited[i] = 0;
     }
     Vertex* s;
-    s = (Vertex*)malloc(sizeof(Vertex) * G->vernum);
+    s = (Vertex*)malloc(sizeof(Vertex) * 20); //使用辅助栈遍历
     if(!s)
         exit(OVERFLOW);
     int top = 0;
     int bottom = 0;
-    s[top++] = G->elem[0];
-    visited[0] = 1;
     Vertex n;
-    while(top != bottom)
-    {
-        n = s[--top];
-        Visit(n);
-        ArcNode* p = n.firstArc;
-        while(p)
-        {
-            if(visited[p->pos] == 0)
-            {
-                visited[p->pos] = 1;
-                s[top++] = G->elem[p->pos];
-            }
-            p = p->next;
-        }
-    }
+	int vnum;
+	while (count != G->vernum) //每个顶点都被遍历后结束
+	{
+		vnum = 0;
+		for(i = 0;vnum < G->vernum;i++)
+		{
+			if (G->elem[i].data.key != 0)
+			{
+				vnum++;
+				if (visited[i] == 0)
+				{
+					s[top++] = G->elem[i];
+					visited[i] = 1;
+					break;
+				}
+			}
+		}
+		while (top != bottom) //空栈子树遍历完毕
+		{
+			n = s[--top];
+			Visit(n);
+			count++;
+			ArcNode* p = n.firstArc;
+			while (p) //点p的邻接点入栈
+			{
+				if (visited[p->pos] == 0)
+				{
+					visited[p->pos] = 1;
+					s[top++] = G->elem[p->pos];
+				}
+				p = p->next;
+			}
+		}
+		printf("\n");
+	}
     return OK;
 }
 status BFSTraverse(Graph* G, status(* Visit)(Vertex v))
@@ -660,37 +686,56 @@ status BFSTraverse(Graph* G, status(* Visit)(Vertex v))
 	if (!G)
 		return ERROR;
 	int* visited;
-	visited = (int*)malloc(sizeof(int) * G->vernum);
+	int count = 0;
+	visited = (int*)malloc(sizeof(int) * 20);
 	if (!visited)
 		exit(OVERFLOW);
 	int i;
-	for (i = 0; i < G->vernum; i++)
+	for (i = 0; i < 20; i++)
 	{
 		visited[i] = 0;
 	}
 	Vertex* q;
-	q = (Vertex*)malloc(sizeof(Vertex) * G->vernum);
+	q = (Vertex*)malloc(sizeof(Vertex) * 20); //辅助队列
 	if (!q)
 		exit(OVERFLOW);
 	int top = 0;
 	int bottom = 0;
-	q[bottom++] = G->elem[0];
-	visited[0] = 1;
 	Vertex n;
-	while (top != bottom)
+	int vnum;
+	while (count != G->vernum) //每个顶点都被遍历后结束
 	{
-		n = q[top++];
-		Visit(n);
-		ArcNode* p = n.firstArc;
-		while (p)
+		vnum = 0;
+		for (i = 0;vnum < G->vernum;i++)
 		{
-			if (visited[p->pos] == 0)
+			if (G->elem[i].data.key != 0)
 			{
-				visited[p->pos] = 1;
-				q[bottom++] = G->elem[p->pos];
+				vnum++;
+				if (visited[i] == 0)
+				{
+					q[bottom++] = G->elem[i];
+					visited[i] = 1;
+					break;
+				}
 			}
-			p = p->next;
 		}
+		while (top != bottom) //队列为空子树遍历完毕
+		{
+			n = q[top++];
+			Visit(n);
+			count++;
+			ArcNode* p = n.firstArc;
+			while (p)
+			{
+				if (visited[p->pos] == 0)
+				{
+					visited[p->pos] = 1;
+					q[bottom++] = G->elem[p->pos];
+				}
+				p = p->next;
+			}
+		}
+		printf("\n");
 	}
 	return OK;
 }
@@ -734,7 +779,7 @@ status LoadGraph(Graph*& G, char* path)
 	char temp[80];
 	scanf("%s", temp);
 	int i;
-	for (i = 1;i <= graphL.length;i++)
+	for (i = 1;i <= graphL.length;i++) //检查图名是否已存在
 		if (!strcmp(temp, graphL.graphs[i]->name))
 			return OVERFLOW;
 	fread(&(G->vernum), sizeof(int), 1, graph);
@@ -760,7 +805,7 @@ status LoadGraph(Graph*& G, char* path)
 		}
 	}
 	graphL.length++;
-	if (graphL.length >= graphL.listLength)
+	if (graphL.length >= graphL.listLength) //如果图表长度已达上限，扩充表
 	{
 		Graph** tempG = graphL.graphs;
 		graphL.graphs = (Graph * *)realloc(graphL.graphs, sizeof(Graph) * (graphL.length + INCREMENT));
