@@ -303,7 +303,7 @@ int main(void)
 			res = LoadGraph(G, path_lg);
 			if (res == INFEASIBLE)
 				printf("路径错误！\n");
-			if (res == OVERFLOW)
+			else if (res == OVERFLOW)
 				printf("已存在图名为%s的图！\n",path_lg);
 			else
 				printf("图已加载到%s！\n",G->name);
@@ -353,6 +353,7 @@ status CreateGraph(Graph*& G, Data* V, int* VR)
 			if (V[i].key == V[j].key) //检测关键字是否唯一
 			{
 				setbuf(stdin, NULL); //清空输入流
+				G = graphL.graphs[0];
 				return ERROR;
 			}
 	for(i = 0;i < 20;i++)
@@ -421,7 +422,7 @@ status DestroyGraph(Graph*& G)
 	}
 	free(G->elem);
 	int j;
-	for (i = 0;i < graphL.length;i++) //从图表中删除图
+	for (i = 1;i <= graphL.length;i++) //从图表中删除图
 	{
 		if (strcmp(G->name, graphL.graphs[i]->name))
 			for (j = i;j < graphL.length - 1;j++)
